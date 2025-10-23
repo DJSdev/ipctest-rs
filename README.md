@@ -5,16 +5,16 @@ This repository contains a Rust `core` binary, event generating modules under `e
 
 ## Build
 
-```
-// all
+```bash
+# all
 cargo build
 
-// core
+# core
 cargo build --bin core
 
-// events
+# events
 cargo build --bin events
 
-// protobufs
+# protobufs
 cargo build --lib
 ```
