@@ -1,10 +1,13 @@
 [package]
-name = "events"
+name = "hello"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 interprocess = { workspace = true }
-tokio = { workspace = true }
 prost = { workspace = true }
+tokio = { workspace = true }
+tonic = { workspace = true }
+tonic-prost = { workspace = true }
+
 protos = { path = "../protos" }

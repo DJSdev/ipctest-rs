@@ -4,6 +4,5 @@ macro_rules! include_proto {
     };
 }
 
-pub mod hello {
-    include_proto!("hello");
-}
+pub mod hello;
+pub mod event;

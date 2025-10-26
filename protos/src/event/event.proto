@@ -1,0 +1,16 @@
+syntax = "proto3";
+package event;
+
+message EventReq {
+    // Event to send
+    string msg = 1;
+}
+
+message EventReply {
+    // Reply to the EventReq
+    string reply = 1;
+}
+
+service EventSender {
+    rpc SendEvent (EventReq) returns (EventReply);
+}

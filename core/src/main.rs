@@ -1,80 +1,72 @@
-use interprocess::local_socket::{prelude::*, GenericNamespaced, ListenerOptions, Stream};
-use std::io::{BufReader, ErrorKind, Read, Write};
+use std::fs::Permissions;
+use std::io::Error;
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+// use interprocess::local_socket::{prelude::*, GenericFilePath, ListenerOptions};
+// use std::{io::ErrorKind};
+use protos::event::MyEvent;
+use protos::event::event_sender_server::EventSenderServer;
+use protos::hello::MyGreeter;
+use tonic::transport::Server;
 
-use protos::hello::{HelloRequest, HelloReply};
-use prost::Message;
+use protos::hello::greeter_server::GreeterServer;
 
-fn serialize_resp(resp: HelloReply) -> Vec<u8> {
-    let mut msg_buf = Vec::with_capacity(resp.encoded_len());
-    resp.encode(&mut msg_buf).unwrap();
+use tokio::fs;
+use tokio::net::UnixListener;
+use tokio::signal;
+use tokio_stream::wrappers::UnixListenerStream;
+use tokio_util::sync::CancellationToken;
 
-    msg_buf
-}
 
-fn deserialize_req(req: &[u8]) -> HelloRequest {
-    HelloRequest::decode(req).unwrap()
-}
-
-fn main() -> std::io::Result<()> {
-    let print_name = "core.socket";
-    let name = print_name.to_ns_name::<GenericNamespaced>()?;
-
-    let opts = ListenerOptions::new().name(name);
-
-    let listener = match opts.create_sync() {
-        Err(e) if e.kind() == ErrorKind::AddrInUse => {
-            eprintln!(
-                "Error: could not start server because the socket file is occupied. Please check
-                if {print_name} is in use by another process and try again."
-            );
-            
-            return Err(e);
-        }
-        x => x?,
-    };
-
-    println!("Server is running at {print_name}");
-
-    for conn in listener.incoming().filter_map(handle_error) {
-        let mut conn = BufReader::new(conn);
-
-        println!("Incoming connection!");
-
-        // First read the length
-        let mut proto_len = [0];
-        conn.read_exact(&mut proto_len)?;
-
-        println!("{proto_len:?}");
-
-        // Then make a buffer to receive the proto buff message
-        let mut buffer = Vec::with_capacity(proto_len[0] as usize);
-        println!("{}", buffer.capacity());
-        conn.read_exact(&mut buffer)?;
-        let req = deserialize_req(&buffer);
-
-        println!("Client requested: {:?}", req);
-
-        let reply = HelloReply {
-            message: "Ayy lmao".to_string()
-        };
-        let buf = serialize_resp(reply);
-
-        let len = buf.encoded_len() as u8;
-        conn.get_mut().write_all(&[len])?;
-        conn.get_mut().write_all(&buf)?;
-
-        buffer.clear();
+async fn create_pipe(path: &str) -> Result<UnixListenerStream, std::io::Error> {
+    if fs::metadata(path).await.is_ok() {
+        fs::remove_file(path).await?;
     }
 
+    std::fs::create_dir_all(Path::new(path).parent().unwrap())?;
+
+    let uds = UnixListener::bind(path).unwrap();
+    fs::set_permissions(path, Permissions::from_mode(0o600)).await?;
+    
+    Ok(UnixListenerStream::new(uds))
+}
+
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let path = "/tmp/core.socket";
+
+    let stream = create_pipe(path).await?;
+
+    let shutdown_token = CancellationToken::new();
+    let task_token = shutdown_token.clone();
+
+    let server_task = tokio::task::spawn(async move {
+        let greeter = MyGreeter::default();
+        let event = MyEvent::default();
+
+        println!("Server is running at {path}");
+
+        Server::builder()
+            .add_service(GreeterServer::new(greeter))
+            .add_service(EventSenderServer::new(event))
+            .serve_with_incoming_shutdown(stream, task_token.cancelled())
+            .await
+    });
+
+
+    loop {
+        tokio::select! {
+            _ = signal::ctrl_c() => {
+                println!("Shutdown received");
+                shutdown_token.cancel();
+                break;
+            }
+        }
+    }
+
+    println!("Stopping server");
+    let _ = server_task.await?;
+
+    println!("Exiting cleanly");
     Ok(())
-}
-
-fn handle_error(conn: std::io::Result<Stream>) -> Option<Stream> {
-    match conn {
-        Ok(c) => Some(c),
-        Err(e) => {
-            eprintln!("Incoming connection failed: {e}");
-            None
-        }
-    }
 }

@@ -1,5 +1,5 @@
 [package]
-name = "core"
+name = "msgs"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,8 +7,6 @@ edition = "2024"
 interprocess = { workspace = true }
 prost = { workspace = true }
 tokio = { workspace = true }
-tokio-stream = { workspace = true }
-tokio-util = { workspace = true }
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
 

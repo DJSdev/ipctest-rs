@@ -10,3 +10,7 @@ message HelloReply {
     // Reply contains the greeting message
     string message = 1;
 }
+
+service Greeter {
+    rpc SayHello (HelloRequest) returns (HelloReply);
+}
