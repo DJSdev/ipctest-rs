@@ -1,5 +1,5 @@
 use tonic::{Request, Response, Status};
-use crate::event::event_sender_server::{EventSender};
+use crate::event::event_sender_server::EventSender;
 
 include_proto!("event");
 

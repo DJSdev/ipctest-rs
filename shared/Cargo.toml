@@ -1,10 +1,12 @@
 [package]
-name = "core"
+name = "shared"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 async-stream = { workspace = true }
+http-body = { workspace = true }
+hyper = { workspace = true }
 interprocess = { workspace = true }
 prost = { workspace = true }
 tokio = { workspace = true }
@@ -15,4 +17,3 @@ tonic-prost = { workspace = true }
 futures-core = { workspace = true }
 
 protos = { path = "../protos" }
-shared = { path = "../shared" }

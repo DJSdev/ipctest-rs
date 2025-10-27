@@ -11,6 +11,9 @@ tonic = { workspace = true }
 tonic-prost = { workspace = true }
 tower = { workspace = true }
 hyper-util = { workspace = true }
-windows = { workspace = true }
 
 protos = { path = "../protos" }
+shared = { path = "../shared" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.62.2", features = [ "Win32" ] }

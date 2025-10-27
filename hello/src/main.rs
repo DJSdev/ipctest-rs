@@ -1,45 +1,22 @@
-use std::{io, time::Duration};
 use hyper_util::rt::TokioIo;
-use tokio::{net::windows::named_pipe::ClientOptions, time};
+use protos::hello::{
+    HelloReply, HelloRequest, create_greeter_client, greeter_client::GreeterClient,
+};
+use std::{io, time::Duration};
+use tonic::{Request, Response};
+
 #[cfg(unix)]
 use tokio::net::UnixStream;
-use tonic::{transport::{Endpoint, Uri}, Request, Response};
-
-use protos::hello::{greeter_client::GreeterClient, HelloReply, HelloRequest};
-
-use tower::service_fn;
-
+#[cfg(windows)]
+use tokio::net::windows::named_pipe::ClientOptions;
+#[cfg(windows)]
 use windows::Win32::Foundation::ERROR_PIPE_BUSY;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    #[cfg(unix)]
-    let path = "unix:///tmp/core.socket";
-    #[cfg(windows)]
-    let path = r"\\.\pipe\core-socket";
+    let pipe_name = "core-socket".to_string();
 
-    let channel = Endpoint::try_from("http://[::]:50051")
-        .unwrap()
-        .connect_with_connector(service_fn(move |_| async move {
-            let client = loop {
-                match ClientOptions::new().open(path) {
-                    Ok(client) => break client,
-                    Err(e) if e.raw_os_error() == Some(ERROR_PIPE_BUSY.0 as i32) => (),
-                    Err(e) => return Err(e),
-                }
-
-                time::sleep(Duration::from_millis(50)).await;
-            };
-
-            Ok::<_, std::io::Error>(TokioIo::new(client))
-        }))
-        .await.unwrap();
-
-    #[cfg(unix)]
-    let mut client = GreeterClient::connect(path).await.unwrap();
-
-    #[cfg(windows)]
-    let mut client = GreeterClient::new(channel);
+    let mut client = create_greeter_client(pipe_name).await.unwrap();
 
     loop {
         let mut name = String::new();
@@ -52,7 +29,7 @@ async fn main() -> Result<(), std::io::Error> {
         let name = name.trim_ascii_end().to_string();
 
         let request = Request::new(HelloRequest {
-            name//: "GreeterMsg".to_string(),
+            name, //: "GreeterMsg".to_string(),
         });
 
         let response = client.say_hello(request).await;
