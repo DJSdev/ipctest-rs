@@ -8,7 +8,6 @@ futures-core = "0.3.31"
 http-body = "1.0.1"
 hyper = "1.7.0"
 hyper-util = "0.1.17"
-interprocess = { version = "2.2.3", features = ["tokio"] }
 prost = "0.14.1"
 tokio = { version = "1.48.0", features = ["fs", "signal", "rt-multi-thread"] }
 tokio-stream = "0.1.17"

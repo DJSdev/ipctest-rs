@@ -7,13 +7,13 @@ edition = "2024"
 async-stream = { workspace = true }
 http-body = { workspace = true }
 hyper = { workspace = true }
-interprocess = { workspace = true }
 prost = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
+tower = { workspace = true }
 futures-core = { workspace = true }
 
 protos = { path = "../protos" }

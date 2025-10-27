@@ -11,14 +11,13 @@ use tokio::signal;
 
 use tokio_util::sync::CancellationToken;
 
-#[cfg(unix)]
 use shared::pipe::server;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let pipe_name = "core-socket";
 
-    let stream = server::create_pipe(pipe_name).await?;
+    let stream = server::create_pipe(pipe_name).await;
 
     let shutdown_token = CancellationToken::new();
     let task_token = shutdown_token.clone();

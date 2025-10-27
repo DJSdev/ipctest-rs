@@ -1,13 +1,14 @@
 use std::{io, pin::Pin};
-use tokio::net::windows::named_pipe::ServerOptions;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::net::windows::named_pipe::NamedPipeServer;
+use tonic::transport::server::Connected;
 
 pub struct TonicNamedPipeServer {
     inner: NamedPipeServer,
 }
 
 impl TonicNamedPipeServer {
-    fn new(np_server: NamedPipeServer) -> Self {
+    pub fn new(np_server: NamedPipeServer) -> Self {
         Self { inner: np_server }
     }
 }
@@ -53,4 +54,3 @@ impl AsyncWrite for TonicNamedPipeServer {
         Pin::new(&mut self.inner).poll_flush(cx)
     }
 }
-

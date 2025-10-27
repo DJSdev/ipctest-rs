@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 async-stream = { workspace = true }
-interprocess = { workspace = true }
 prost = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
