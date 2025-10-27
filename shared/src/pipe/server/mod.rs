@@ -1,6 +1,9 @@
 use std::io;
 use futures_core::stream::Stream as FutureStream;
 
+#[cfg(unix)]
+use tokio_stream::wrappers::UnixListenerStream;
+
 #[cfg(windows)]
 pub mod windows;
 
@@ -13,7 +16,7 @@ pub async fn create_pipe(pipe_name: &str) -> Result<UnixListenerStream, io::Erro
     use std::fs::Permissions;
     use tokio::fs;
     use tokio::net::UnixListener;
-    use tokio_stream::wrappers::UnixListenerStream;
+
     use std::os::unix::fs::PermissionsExt;
 
     let path = format!("/tmp/{}", pipe_name);

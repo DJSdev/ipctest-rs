@@ -17,7 +17,11 @@ use shared::pipe::server;
 async fn main() -> std::io::Result<()> {
     let pipe_name = "core-socket";
 
+    // TODO: clean this up so they both return Result or not
+    #[cfg(windows)]
     let stream = server::create_pipe(pipe_name).await;
+    #[cfg(unix)]
+    let stream = server::create_pipe(pipe_name).await?;
 
     let shutdown_token = CancellationToken::new();
     let task_token = shutdown_token.clone();
